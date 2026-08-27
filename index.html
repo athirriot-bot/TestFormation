@@ -371,30 +371,37 @@
       fireworksCtx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
     }
 
-    function launchFireworks() {
-      if (reduceMotion.matches) return;
+    function addFireworkBurst(x, y, particleCount = 54) {
       const colors = ['#3ef3b7', '#5aa9ff', '#ffcf5a', '#ff5277', '#b86bff', '#ffffff'];
-      const bursts = 3;
 
-      for (let burst = 0; burst < bursts; burst++) {
-        const x = window.innerWidth * (0.25 + Math.random() * 0.5);
-        const y = window.innerHeight * (0.18 + Math.random() * 0.32);
-        for (let i = 0; i < 42; i++) {
-          const angle = (Math.PI * 2 * i) / 42;
-          const speed = 2.2 + Math.random() * 4.8;
-          fireworks.push({
-            x,
-            y,
-            vx: Math.cos(angle) * speed,
-            vy: Math.sin(angle) * speed,
-            life: 1,
-            decay: 0.014 + Math.random() * 0.012,
-            size: 2 + Math.random() * 3,
-            color: colors[Math.floor(Math.random() * colors.length)]
-          });
-        }
+      for (let i = 0; i < particleCount; i++) {
+        const angle = (Math.PI * 2 * i) / particleCount;
+        const speed = 2.4 + Math.random() * 5.4;
+        fireworks.push({
+          x,
+          y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          life: 1,
+          decay: 0.012 + Math.random() * 0.014,
+          size: 2 + Math.random() * 3.5,
+          color: colors[Math.floor(Math.random() * colors.length)]
+        });
       }
+    }
 
+    function launchFireworks(originElement) {
+      if (reduceMotion.matches) return;
+      const origin = originElement?.getBoundingClientRect();
+      const originX = origin ? origin.left + origin.width / 2 : window.innerWidth / 2;
+      const originY = origin ? origin.top + origin.height / 2 : window.innerHeight * 0.45;
+      const bursts = [
+        [originX, originY, 72],
+        [window.innerWidth * (0.22 + Math.random() * 0.18), window.innerHeight * (0.16 + Math.random() * 0.28), 48],
+        [window.innerWidth * (0.6 + Math.random() * 0.2), window.innerHeight * (0.16 + Math.random() * 0.28), 48]
+      ];
+
+      bursts.forEach(([x, y, count]) => addFireworkBurst(x, y, count));
       if (!fireworksAnimation) animateFireworks();
     }
 
@@ -441,19 +448,19 @@
         const button = document.createElement('button');
         button.className = 'choice';
         button.textContent = choice;
-        button.onclick = () => answerQuestion(index, item.answer);
+        button.onclick = () => answerQuestion(index, item.answer, button);
         choices.appendChild(button);
       });
       statusBadge.textContent = 'Question paused';
       questionModal.classList.add('show');
     }
 
-    function answerQuestion(choice, answer) {
+    function answerQuestion(choice, answer, selectedButton) {
       const feedback = document.getElementById('feedback');
       document.querySelectorAll('.choice').forEach(button => button.disabled = true);
       if (choice === answer) {
         correct++;
-        launchFireworks();
+        launchFireworks(selectedButton);
         feedback.textContent = 'Correct. Fireworks unlocked — resuming mission...';
         feedback.className = 'correct';
       } else {
