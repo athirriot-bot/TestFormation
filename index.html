@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
   <title>Cyber Snake Validation</title>
   <style>
     :root {
@@ -169,6 +172,14 @@
     .incorrect { color: var(--danger); }
     .result-title { font-size: 2rem; margin-bottom: 8px; }
     .tip { color: var(--muted); line-height: 1.5; }
+    .deployment-note {
+      margin: 0;
+      color: var(--accent);
+      font-size: .78rem;
+      font-weight: 800;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
 
     @media (max-width: 880px) { main { grid-template-columns: 1fr; } }
   </style>
@@ -204,6 +215,7 @@
       <button id="startBtn">Start mission</button>
       <button id="restartBtn" class="secondary">Restart with new questions</button>
       <p class="tip">The game pauses after each block. Choose the strongest cybersecurity answer to continue.</p>
+      <p class="deployment-note">Updated build: correct answers launch fireworks.</p>
     </aside>
   </main>
 
