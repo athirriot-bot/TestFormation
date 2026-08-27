@@ -383,20 +383,20 @@
       fireworksCtx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
     }
 
-    function addFireworkBurst(x, y, particleCount = 54) {
+    function addFireworkBurst(x, y, particleCount = 96) {
       const colors = ['#3ef3b7', '#5aa9ff', '#ffcf5a', '#ff5277', '#b86bff', '#ffffff'];
 
       for (let i = 0; i < particleCount; i++) {
         const angle = (Math.PI * 2 * i) / particleCount;
-        const speed = 2.4 + Math.random() * 5.4;
+        const speed = 4.2 + Math.random() * 8.6;
         fireworks.push({
           x,
           y,
           vx: Math.cos(angle) * speed,
           vy: Math.sin(angle) * speed,
           life: 1,
-          decay: 0.012 + Math.random() * 0.014,
-          size: 2 + Math.random() * 3.5,
+          decay: 0.0045 + Math.random() * 0.005,
+          size: 4 + Math.random() * 6,
           color: colors[Math.floor(Math.random() * colors.length)]
         });
       }
@@ -408,9 +408,11 @@
       const originX = origin ? origin.left + origin.width / 2 : window.innerWidth / 2;
       const originY = origin ? origin.top + origin.height / 2 : window.innerHeight * 0.45;
       const bursts = [
-        [originX, originY, 72],
-        [window.innerWidth * (0.22 + Math.random() * 0.18), window.innerHeight * (0.16 + Math.random() * 0.28), 48],
-        [window.innerWidth * (0.6 + Math.random() * 0.2), window.innerHeight * (0.16 + Math.random() * 0.28), 48]
+        [originX, originY, 150],
+        [window.innerWidth * (0.16 + Math.random() * 0.2), window.innerHeight * (0.14 + Math.random() * 0.24), 110],
+        [window.innerWidth * (0.42 + Math.random() * 0.16), window.innerHeight * (0.12 + Math.random() * 0.22), 120],
+        [window.innerWidth * (0.68 + Math.random() * 0.18), window.innerHeight * (0.14 + Math.random() * 0.24), 110],
+        [window.innerWidth * (0.24 + Math.random() * 0.52), window.innerHeight * (0.48 + Math.random() * 0.16), 95]
       ];
 
       bursts.forEach(([x, y, count]) => addFireworkBurst(x, y, count));
@@ -432,7 +434,7 @@
 
         fireworksCtx.globalAlpha = Math.max(particle.life, 0);
         fireworksCtx.fillStyle = particle.color;
-        fireworksCtx.shadowBlur = 16;
+        fireworksCtx.shadowBlur = 28;
         fireworksCtx.shadowColor = particle.color;
         fireworksCtx.beginPath();
         fireworksCtx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
