@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cyber Snake Validation</title>
+  <style>
+    :root {
+      --bg: #07111f;
+      --panel: #101d33;
+      --panel-2: #152641;
+      --accent: #3ef3b7;
+      --accent-2: #5aa9ff;
+      --danger: #ff5277;
+      --warn: #ffd166;
+      --text: #eef7ff;
+      --muted: #9eb5cf;
+      --grid: rgba(255,255,255,.055);
+      --shadow: 0 24px 80px rgba(0,0,0,.42);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background:
+        radial-gradient(circle at 20% 15%, rgba(62, 243, 183, .18), transparent 28%),
+        radial-gradient(circle at 80% 10%, rgba(90, 169, 255, .22), transparent 30%),
+        linear-gradient(135deg, #050914, var(--bg));
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    main {
+      width: min(1120px, 100%);
+      display: grid;
+      grid-template-columns: minmax(320px, 680px) minmax(280px, 360px);
+      gap: 22px;
+      align-items: stretch;
+    }
+
+    .game-card, .side-card {
+      background: linear-gradient(180deg, rgba(21,38,65,.96), rgba(12,24,43,.96));
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .game-card { padding: 18px; }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    h1 { margin: 0; font-size: clamp(1.6rem, 4vw, 2.45rem); letter-spacing: -.04em; }
+    .subtitle { margin: 4px 0 0; color: var(--muted); font-size: .96rem; }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 8px 12px;
+      border: 1px solid rgba(62,243,183,.35);
+      border-radius: 999px;
+      color: var(--accent);
+      background: rgba(62,243,183,.09);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    canvas {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      display: block;
+      border-radius: 18px;
+      background-color: #081424;
+      background-image:
+        linear-gradient(var(--grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+      background-size: 24px 24px;
+      border: 1px solid rgba(255,255,255,.1);
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 14px;
+      color: var(--muted);
+      font-size: .9rem;
+    }
+
+    .side-card { padding: 22px; display: flex; flex-direction: column; gap: 16px; }
+    .stat-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .stat {
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 16px;
+      padding: 14px;
+    }
+    .stat span { display: block; color: var(--muted); font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; }
+    .stat strong { display: block; margin-top: 5px; font-size: 1.5rem; }
+    .progress {
+      height: 12px;
+      background: rgba(255,255,255,.08);
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.08);
+    }
+    .progress div { height: 100%; width: 0%; background: linear-gradient(90deg, var(--accent), var(--accent-2)); transition: width .25s ease; }
+
+    button {
+      border: 0;
+      border-radius: 14px;
+      padding: 12px 14px;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 800;
+      color: #04131f;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      box-shadow: 0 12px 26px rgba(62,243,183,.18);
+    }
+    button.secondary { background: rgba(255,255,255,.1); color: var(--text); box-shadow: none; border: 1px solid rgba(255,255,255,.12); }
+    button.choice { width: 100%; text-align: left; margin-top: 10px; color: var(--text); background: rgba(255,255,255,.075); box-shadow: none; border: 1px solid rgba(255,255,255,.12); }
+    button.choice:hover, button.choice:focus { outline: 2px solid rgba(62,243,183,.36); }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      display: none;
+      place-items: center;
+      padding: 22px;
+      background: rgba(2,8,18,.78);
+      backdrop-filter: blur(9px);
+      z-index: 5;
+    }
+    .modal.show { display: grid; }
+    .dialog {
+      width: min(620px, 100%);
+      background: linear-gradient(180deg, #172a48, #0d1b30);
+      border: 1px solid rgba(255,255,255,.16);
+      border-radius: 24px;
+      padding: 24px;
+      box-shadow: var(--shadow);
+    }
+    .dialog h2 { margin: 0 0 10px; }
+    .domain { color: var(--accent); font-weight: 800; letter-spacing: .05em; text-transform: uppercase; font-size: .78rem; }
+    #feedback { min-height: 24px; margin: 14px 0 0; font-weight: 700; }
+    .correct { color: var(--accent); }
+    .incorrect { color: var(--danger); }
+    .result-title { font-size: 2rem; margin-bottom: 8px; }
+    .tip { color: var(--muted); line-height: 1.5; }
+
+    @media (max-width: 880px) { main { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="game-card" aria-label="Snake game area">
+      <header>
+        <div>
+          <h1>Cyber Snake</h1>
+          <p class="subtitle">Eat blocks, answer questions, validate academy skills.</p>
+        </div>
+        <div class="badge" id="statusBadge">Ready</div>
+      </header>
+      <canvas id="game" width="600" height="600" aria-label="Snake game board"></canvas>
+      <div class="controls">
+        <span>Move: Arrow keys or WASD</span>
+        <span>Goal: Answer 10 randomized questions</span>
+      </div>
+    </section>
+
+    <aside class="side-card" aria-label="Game status">
+      <div class="stat-grid">
+        <div class="stat"><span>Blocks</span><strong id="score">0</strong></div>
+        <div class="stat"><span>Correct</span><strong id="correct">0</strong></div>
+        <div class="stat"><span>Question</span><strong id="questionCount">0/10</strong></div>
+        <div class="stat"><span>Length</span><strong id="length">3</strong></div>
+      </div>
+      <div>
+        <p class="tip">Assessment progress</p>
+        <div class="progress" aria-label="Assessment progress"><div id="progressBar"></div></div>
+      </div>
+      <button id="startBtn">Start mission</button>
+      <button id="restartBtn" class="secondary">Restart with new questions</button>
+      <p class="tip">The game pauses after each block. Choose the strongest cybersecurity answer to continue.</p>
+    </aside>
+  </main>
+
+  <section class="modal" id="questionModal" role="dialog" aria-modal="true" aria-labelledby="questionTitle">
+    <div class="dialog">
+      <div class="domain" id="questionDomain"></div>
+      <h2 id="questionTitle">Question</h2>
+      <div id="choices"></div>
+      <p id="feedback" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <section class="modal" id="resultModal" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+    <div class="dialog">
+      <h2 class="result-title" id="resultTitle">Mission complete</h2>
+      <p id="resultText"></p>
+      <button id="playAgainBtn">Play again</button>
+    </div>
+  </section>
+
+  <script>
+    const questionBank = [
+      { domain: 'IAM', q: 'What is the best description of least privilege?', choices: ['Give users admin rights so support tickets drop.', 'Give users access that roughly matches their department.', 'Grant only the minimum access needed for the task and review it regularly.'], answer: 2 },
+      { domain: 'IAM', q: 'Which control most directly reduces risk from stolen passwords?', choices: ['Longer usernames.', 'Password reuse reminders.', 'Phishing-resistant MFA such as FIDO2/security keys.'], answer: 2 },
+      { domain: 'IAM', q: 'What should happen when an employee changes roles?', choices: ['Keep all old access until annual review.', 'Add new access but remove only obviously sensitive old access.', 'Run joiner-mover-leaver recertification and remove access no longer required.'], answer: 2 },
+      { domain: 'IAM', q: 'What is separation of duties intended to prevent?', choices: ['Users taking vacations.', 'One person controlling all steps of a sensitive transaction.', 'Single sign-on across cloud apps.'], answer: 1 },
+      { domain: 'IAM', q: 'What is privileged access management primarily for?', choices: ['Making privileged accounts easier to share.', 'Tracking normal employee birthdays.', 'Controlling, monitoring, and time-limiting high-risk administrative access.'], answer: 2 },
+      { domain: 'IAM', q: 'Which identity signal is best for risk-based access?', choices: ['The user’s favorite color.', 'Only the user’s job title.', 'Context such as device health, location, behavior, and authentication strength.'], answer: 2 },
+      { domain: 'IAM', q: 'What is a service account best practice?', choices: ['Use one shared account for every app.', 'Never rotate credentials because apps may break.', 'Assign scoped permissions, rotate secrets, and monitor usage.'], answer: 2 },
+      { domain: 'GRC', q: 'What is a risk register used for?', choices: ['Listing office furniture.', 'Documenting only fixed vulnerabilities.', 'Tracking risks, owners, likelihood, impact, treatment, and status.'], answer: 2 },
+      { domain: 'GRC', q: 'What does compliance mean in cybersecurity?', choices: ['Security is perfect.', 'Controls align with required laws, standards, or policies at a point in time.', 'No incidents can happen.'], answer: 1 },
+      { domain: 'GRC', q: 'Which is the strongest evidence for a control operating effectively?', choices: ['A manager says it probably works.', 'A policy exists but is not tested.', 'Time-stamped logs, tickets, samples, and test results showing consistent operation.'], answer: 2 },
+      { domain: 'GRC', q: 'What is the purpose of a security policy exception process?', choices: ['Let anyone ignore policy forever.', 'Allow temporary deviations with risk acceptance, approvals, compensating controls, and expiry.', 'Avoid documenting business risks.'], answer: 1 },
+      { domain: 'GRC', q: 'What is residual risk?', choices: ['Risk before any controls exist.', 'Risk transferred to another planet.', 'Risk remaining after controls and treatment are applied.'], answer: 2 },
+      { domain: 'GRC', q: 'What should a third-party risk review include?', choices: ['Only the vendor logo.', 'Price and contract length only.', 'Data access, control posture, incident history, compliance needs, and ongoing monitoring.'], answer: 2 },
+      { domain: 'GRC', q: 'What is a business impact analysis used for?', choices: ['Choosing cafeteria vendors.', 'Identifying critical processes, dependencies, and recovery priorities.', 'Replacing all risk assessments.'], answer: 1 },
+      { domain: 'SOC', q: 'What is alert triage?', choices: ['Deleting all noisy alerts.', 'Sorting alerts by color.', 'Assessing alerts for severity, scope, credibility, and response priority.'], answer: 2 },
+      { domain: 'SOC', q: 'Which data is most useful for investigating suspicious login activity?', choices: ['Wallpaper settings.', 'Authentication logs with time, source, user, device, and MFA result.', 'Printer toner levels.'], answer: 1 },
+      { domain: 'SOC', q: 'What is an indicator of compromise?', choices: ['Any business KPI.', 'A possible sign of malicious activity, such as a known bad hash, domain, or IP.', 'A password complexity rule.'], answer: 1 },
+      { domain: 'SOC', q: 'Why should incident response teams preserve evidence?', choices: ['To slow down remediation.', 'Because screenshots are decorative.', 'To support root-cause analysis, legal needs, lessons learned, and reliable timelines.'], answer: 2 },
+      { domain: 'SOC', q: 'What is containment during incident response?', choices: ['Ignoring the incident until patch Tuesday.', 'Actions that limit attacker access or spread while preserving business operations where possible.', 'Publishing all details immediately.'], answer: 1 },
+      { domain: 'SOC', q: 'What is threat hunting?', choices: ['Waiting only for automated alerts.', 'Proactively searching for attacker behavior that controls may have missed.', 'Installing antivirus once.'], answer: 1 },
+      { domain: 'SOC', q: 'What makes a detection rule high quality?', choices: ['It fires constantly.', 'It has no owner.', 'It maps to a threat behavior, has useful context, and balances coverage with false positives.'], answer: 2 },
+      { domain: 'AI Security', q: 'What is prompt injection?', choices: ['Making a prompt shorter.', 'A user or data source attempting to override or manipulate an AI system’s instructions.', 'Encrypting model weights.'], answer: 1 },
+      { domain: 'AI Security', q: 'How should sensitive data be handled in AI prompts?', choices: ['Paste everything for better answers.', 'Mask, minimize, or avoid sensitive data unless approved controls and business need exist.', 'Only remove emojis.'], answer: 1 },
+      { domain: 'AI Security', q: 'What is model output validation?', choices: ['Assuming every response is correct.', 'Checking AI outputs against policy, schema, facts, safety rules, or human review before use.', 'Making responses longer.'], answer: 1 },
+      { domain: 'AI Security', q: 'What is a key risk of AI-generated code?', choices: ['It always compiles perfectly.', 'It may introduce vulnerable patterns, insecure dependencies, or incorrect logic.', 'It cannot be reviewed.'], answer: 1 },
+      { domain: 'AI Security', q: 'What does retrieval-augmented generation add to an AI system?', choices: ['Random animations.', 'External context from approved knowledge sources to ground responses.', 'Automatic legal immunity.'], answer: 1 },
+      { domain: 'AI Security', q: 'What is an AI guardrail?', choices: ['A physical rail around servers.', 'A control that helps constrain, monitor, or filter model inputs and outputs.', 'A way to remove all human oversight.'], answer: 1 },
+      { domain: 'AI Security', q: 'What is data poisoning?', choices: ['Compressing a dataset.', 'Malicious or low-quality data introduced to corrupt model behavior or decisions.', 'Backing up training data.'], answer: 1 },
+      { domain: 'SOC', q: 'What is the main purpose of a playbook?', choices: ['Replace all analysts.', 'Provide repeatable steps, decision points, and escalation paths for common scenarios.', 'Store passwords in one place.'], answer: 1 },
+      { domain: 'GRC', q: 'What is control ownership?', choices: ['Owning a game controller.', 'Assigning accountability for implementing, operating, and evidencing a security control.', 'Letting auditors run production systems.'], answer: 1 }
+    ];
+
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    const cells = 25;
+    const tile = canvas.width / cells;
+    let snake, direction, nextDirection, food, timer, active, paused, asked, correct, selectedQuestions;
+
+    const scoreEl = document.getElementById('score');
+    const correctEl = document.getElementById('correct');
+    const questionCountEl = document.getElementById('questionCount');
+    const lengthEl = document.getElementById('length');
+    const progressBar = document.getElementById('progressBar');
+    const statusBadge = document.getElementById('statusBadge');
+    const questionModal = document.getElementById('questionModal');
+    const resultModal = document.getElementById('resultModal');
+
+    function shuffle(items) {
+      return [...items].sort(() => Math.random() - 0.5);
+    }
+
+    function reset() {
+      snake = [{ x: 12, y: 12 }, { x: 11, y: 12 }, { x: 10, y: 12 }];
+      direction = { x: 1, y: 0 };
+      nextDirection = { x: 1, y: 0 };
+      selectedQuestions = shuffle(questionBank).slice(0, 10);
+      asked = 0;
+      correct = 0;
+      active = false;
+      paused = false;
+      placeFood();
+      updateStats();
+      statusBadge.textContent = 'Ready';
+      questionModal.classList.remove('show');
+      resultModal.classList.remove('show');
+      draw();
+    }
+
+    function start() {
+      if (active) return;
+      active = true;
+      paused = false;
+      statusBadge.textContent = 'In mission';
+      timer = setInterval(tick, 115);
+    }
+
+    function stopTimer() { clearInterval(timer); }
+
+    function placeFood() {
+      do {
+        food = { x: Math.floor(Math.random() * cells), y: Math.floor(Math.random() * cells) };
+      } while (snake.some(part => part.x === food.x && part.y === food.y));
+    }
+
+    function tick() {
+      if (!active || paused) return;
+      direction = nextDirection;
+      const head = { x: snake[0].x + direction.x, y: snake[0].y + direction.y };
+
+      if (head.x < 0 || head.y < 0 || head.x >= cells || head.y >= cells || snake.some(part => part.x === head.x && part.y === head.y)) {
+        statusBadge.textContent = 'Reset after collision';
+        snake = [{ x: 12, y: 12 }, { x: 11, y: 12 }, { x: 10, y: 12 }];
+        direction = nextDirection = { x: 1, y: 0 };
+        draw();
+        return;
+      }
+
+      snake.unshift(head);
+      if (head.x === food.x && head.y === food.y) {
+        asked++;
+        paused = true;
+        updateStats();
+        draw();
+        showQuestion();
+      } else {
+        snake.pop();
+        draw();
+      }
+      updateStats();
+    }
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#ffcf5a';
+      ctx.beginPath();
+      ctx.roundRect(food.x * tile + 4, food.y * tile + 4, tile - 8, tile - 8, 7);
+      ctx.fill();
+
+      snake.forEach((part, index) => {
+        const gradient = ctx.createLinearGradient(part.x * tile, part.y * tile, (part.x + 1) * tile, (part.y + 1) * tile);
+        gradient.addColorStop(0, index === 0 ? '#3ef3b7' : '#20c997');
+        gradient.addColorStop(1, index === 0 ? '#5aa9ff' : '#147f72');
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.roundRect(part.x * tile + 2, part.y * tile + 2, tile - 4, tile - 4, 8);
+        ctx.fill();
+      });
+    }
+
+    function showQuestion() {
+      const item = selectedQuestions[asked - 1];
+      document.getElementById('questionDomain').textContent = item.domain;
+      document.getElementById('questionTitle').textContent = item.q;
+      document.getElementById('feedback').textContent = '';
+      document.getElementById('feedback').className = '';
+      const choices = document.getElementById('choices');
+      choices.innerHTML = '';
+      item.choices.forEach((choice, index) => {
+        const button = document.createElement('button');
+        button.className = 'choice';
+        button.textContent = choice;
+        button.onclick = () => answerQuestion(index, item.answer);
+        choices.appendChild(button);
+      });
+      statusBadge.textContent = 'Question paused';
+      questionModal.classList.add('show');
+    }
+
+    function answerQuestion(choice, answer) {
+      const feedback = document.getElementById('feedback');
+      document.querySelectorAll('.choice').forEach(button => button.disabled = true);
+      if (choice === answer) {
+        correct++;
+        feedback.textContent = 'Correct. Resuming mission...';
+        feedback.className = 'correct';
+      } else {
+        feedback.textContent = 'Not quite. Review this area after the mission.';
+        feedback.className = 'incorrect';
+      }
+      updateStats();
+      setTimeout(() => {
+        questionModal.classList.remove('show');
+        if (asked >= 10) finishGame();
+        else {
+          placeFood();
+          paused = false;
+          statusBadge.textContent = 'In mission';
+        }
+      }, 950);
+    }
+
+    function finishGame() {
+      active = false;
+      paused = true;
+      stopTimer();
+      statusBadge.textContent = 'Complete';
+      const passed = correct > 8;
+      document.getElementById('resultTitle').textContent = passed ? 'Skills validated' : 'Keep training';
+      document.getElementById('resultText').textContent = `You answered ${correct}/10 questions correctly. ${passed ? 'Excellent work across IAM, GRC, SOC, and AI security.' : 'Score above 8/10 to validate this module.'}`;
+      resultModal.classList.add('show');
+    }
+
+    function updateStats() {
+      scoreEl.textContent = asked;
+      correctEl.textContent = correct;
+      questionCountEl.textContent = `${asked}/10`;
+      lengthEl.textContent = snake.length;
+      progressBar.style.width = `${asked * 10}%`;
+    }
+
+    function changeDirection(x, y) {
+      if (direction.x + x === 0 && direction.y + y === 0) return;
+      nextDirection = { x, y };
+    }
+
+    document.addEventListener('keydown', event => {
+      const keyMap = {
+        ArrowUp: [0, -1], w: [0, -1], W: [0, -1],
+        ArrowDown: [0, 1], s: [0, 1], S: [0, 1],
+        ArrowLeft: [-1, 0], a: [-1, 0], A: [-1, 0],
+        ArrowRight: [1, 0], d: [1, 0], D: [1, 0]
+      };
+      if (keyMap[event.key]) {
+        event.preventDefault();
+        changeDirection(...keyMap[event.key]);
+      }
+    });
+
+    document.getElementById('startBtn').addEventListener('click', start);
+    document.getElementById('restartBtn').addEventListener('click', () => { stopTimer(); reset(); start(); });
+    document.getElementById('playAgainBtn').addEventListener('click', () => { reset(); start(); });
+
+    reset();
+  </script>
+</body>
+</html>
