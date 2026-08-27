@@ -134,6 +134,15 @@
     button.choice { width: 100%; text-align: left; margin-top: 10px; color: var(--text); background: rgba(255,255,255,.075); box-shadow: none; border: 1px solid rgba(255,255,255,.12); }
     button.choice:hover, button.choice:focus { outline: 2px solid rgba(62,243,183,.36); }
 
+    .fireworks {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 8;
+    }
+
     .modal {
       position: fixed;
       inset: 0;
@@ -198,6 +207,8 @@
     </aside>
   </main>
 
+  <canvas class="fireworks" id="fireworks" aria-hidden="true"></canvas>
+
   <section class="modal" id="questionModal" role="dialog" aria-modal="true" aria-labelledby="questionTitle">
     <div class="dialog">
       <div class="domain" id="questionDomain"></div>
@@ -251,9 +262,14 @@
 
     const canvas = document.getElementById('game');
     const ctx = canvas.getContext('2d');
+    const fireworksCanvas = document.getElementById('fireworks');
+    const fireworksCtx = fireworksCanvas.getContext('2d');
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     const cells = 25;
     const tile = canvas.width / cells;
     let snake, direction, nextDirection, food, timer, active, paused, asked, correct, selectedQuestions;
+    let fireworks = [];
+    let fireworksAnimation;
 
     const scoreEl = document.getElementById('score');
     const correctEl = document.getElementById('correct');
@@ -346,6 +362,73 @@
       });
     }
 
+
+    function resizeFireworks() {
+      fireworksCanvas.width = window.innerWidth * window.devicePixelRatio;
+      fireworksCanvas.height = window.innerHeight * window.devicePixelRatio;
+      fireworksCanvas.style.width = `${window.innerWidth}px`;
+      fireworksCanvas.style.height = `${window.innerHeight}px`;
+      fireworksCtx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
+    }
+
+    function launchFireworks() {
+      if (reduceMotion.matches) return;
+      const colors = ['#3ef3b7', '#5aa9ff', '#ffcf5a', '#ff5277', '#b86bff', '#ffffff'];
+      const bursts = 3;
+
+      for (let burst = 0; burst < bursts; burst++) {
+        const x = window.innerWidth * (0.25 + Math.random() * 0.5);
+        const y = window.innerHeight * (0.18 + Math.random() * 0.32);
+        for (let i = 0; i < 42; i++) {
+          const angle = (Math.PI * 2 * i) / 42;
+          const speed = 2.2 + Math.random() * 4.8;
+          fireworks.push({
+            x,
+            y,
+            vx: Math.cos(angle) * speed,
+            vy: Math.sin(angle) * speed,
+            life: 1,
+            decay: 0.014 + Math.random() * 0.012,
+            size: 2 + Math.random() * 3,
+            color: colors[Math.floor(Math.random() * colors.length)]
+          });
+        }
+      }
+
+      if (!fireworksAnimation) animateFireworks();
+    }
+
+    function animateFireworks() {
+      fireworksAnimation = requestAnimationFrame(animateFireworks);
+      fireworksCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      fireworks = fireworks.filter(particle => particle.life > 0);
+
+      fireworks.forEach(particle => {
+        particle.x += particle.vx;
+        particle.y += particle.vy;
+        particle.vy += 0.045;
+        particle.vx *= 0.99;
+        particle.vy *= 0.99;
+        particle.life -= particle.decay;
+
+        fireworksCtx.globalAlpha = Math.max(particle.life, 0);
+        fireworksCtx.fillStyle = particle.color;
+        fireworksCtx.shadowBlur = 16;
+        fireworksCtx.shadowColor = particle.color;
+        fireworksCtx.beginPath();
+        fireworksCtx.arc(particle.x, particle.y, particle.size, 0, Math.PI * 2);
+        fireworksCtx.fill();
+      });
+      fireworksCtx.globalAlpha = 1;
+      fireworksCtx.shadowBlur = 0;
+
+      if (!fireworks.length) {
+        cancelAnimationFrame(fireworksAnimation);
+        fireworksAnimation = undefined;
+        fireworksCtx.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      }
+    }
+
     function showQuestion() {
       const item = selectedQuestions[asked - 1];
       document.getElementById('questionDomain').textContent = item.domain;
@@ -370,7 +453,8 @@
       document.querySelectorAll('.choice').forEach(button => button.disabled = true);
       if (choice === answer) {
         correct++;
-        feedback.textContent = 'Correct. Resuming mission...';
+        launchFireworks();
+        feedback.textContent = 'Correct. Fireworks unlocked — resuming mission...';
         feedback.className = 'correct';
       } else {
         feedback.textContent = 'Not quite. Review this area after the mission.';
@@ -424,6 +508,9 @@
         changeDirection(...keyMap[event.key]);
       }
     });
+
+    window.addEventListener('resize', resizeFireworks);
+    resizeFireworks();
 
     document.getElementById('startBtn').addEventListener('click', start);
     document.getElementById('restartBtn').addEventListener('click', () => { stopTimer(); reset(); start(); });
